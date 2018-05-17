@@ -1,0 +1,122 @@
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Three.js</title>
+  <style>
+  	body { margin:0; }
+  	canvas {width:100%; height:100%;};
+  </style>
+  <body>
+  <script src="http://mrdoob.github.com/three.js/build/three.min.js"></script>
+  <script src="jscode/OrbitControls.js"></script>
+	  <script>
+//MrDoob fps counter
+(function(){var script=document.createElement('script');script.onload=function(){var stats=new Stats();document.body.appendChild(stats.dom);requestAnimationFrame(function loop(){stats.update();requestAnimationFrame(loop)});};script.src="jscode/stats.min.js";document.head.appendChild(script);})()
+//THREE SETUP
+let scene = new THREE.Scene();
+let camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 100 );
+
+let renderer = new THREE.WebGLRenderer();
+renderer.setSize( window.innerWidth, window.innerHeight );
+document.body.appendChild( renderer.domElement );
+
+window.addEventListener( 'resize' , function (){
+	renderer.setSize( window.innerWidth, window.innerHeight );
+	camera.aspect = window.innerWidth / window.innerHeight;
+	camera.updateProjectionMatrix();
+});
+
+camera.position.y = 10;
+camera.position.x = 5;
+
+//variable setup
+let floormap = [];
+for(let i = 0; i<10;i++)
+	floormap[i] = [];
+let gamemap = [];
+for(let i = 0; i<10;i++)
+	gamemap[i] = [];
+//map[x][y]
+
+//temp
+for(let x = 0; x<10;x++){
+		for(let y = 0; y<10;y++){
+			floormap[x][y]=getRandomInt(4);
+	}
+}
+for(let x = 0; x<10;x++){
+		for(let y = 0; y<10;y++){
+			gamemap[x][y]=getRandomInt(2);
+	}
+}
+//material setup
+
+
+
+//function setup
+
+function getRandomInt(max) {
+  return Math.floor(Math.random() * Math.floor(max));
+}
+
+function loadGround(){
+	for(let x = 0; x<10;x++){
+		for(let y = 0; y<10;y++){
+			if(floormap[x][y]==3){ //green objective
+				this.geometry = new THREE.BoxGeometry(1,1,1);
+				this.material = new THREE.MeshBasicMaterial(
+					{color:0xff0000, wireframe:false});
+				this.cube = new THREE.Mesh(this.geometry, this.material);
+				scene.add(cube);
+				cube.position.set( x, 0, y );
+			} else if(floormap[x][y]==4){ //blue objective
+				this.geometry = new THREE.BoxGeometry(1,1,1);
+				this.material = new THREE.MeshBasicMaterial(
+					{color:0x0000ff, wireframe:false});
+				this.cube = new THREE.Mesh(this.geometry,this.material);
+				scene.add(cube);
+				cube.position.set( x, 0, y );
+			} else { //ground
+				this.geometry = new THREE.BoxGeometry(1,1,1);
+				this.material = new THREE.MeshBasicMaterial(
+					{color:0x00ffff, wireframe:false});
+				this.cube = new THREE.Mesh(this.geometry, this.material);
+				scene.add(this.cube);
+				this.cube.position.set( x, 0, y );
+			}
+		}
+	}
+}
+
+function loadWalls(){
+	for(let x = 0; x<10;x++){
+		for(let y = 0; y<10;y++){
+			if(gamemap[x][y]==1){ //green objective
+				this.geometry = new THREE.BoxGeometry(1,2,1);
+				this.material = new THREE.MeshBasicMaterial
+					({color:0xffff00, wireframe:false});
+				this.cube = new THREE.Mesh(this.geometry, this.material);
+				scene.add(this.cube);
+				this.cube.position.set( x, 1.5, y );
+			}
+		}
+	}
+}
+//object setup
+controls = new THREE.OrbitControls( camera, renderer.domElement);
+
+//game logic
+let animate = function () {
+	requestAnimationFrame( animate );
+	//cube.rotation.x += 0.1;
+	//cube.rotation.y += 0.1;
+
+	renderer.render(scene, camera);
+};
+loadGround();
+loadWalls();
+animate();
+</script>
+</body>
+</head>
+</html>
