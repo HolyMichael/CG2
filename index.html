@@ -87,8 +87,8 @@ function level1(){ //only changes important values by default floor is filled wi
     iO[1][1] = new interactiveObject(1, null, 0, 0);
     iO[1][4] = new interactiveObject(1, null, 0, 0);
     iO[1][5] = new interactiveObject(1, null, 0, 0);
-    //iO[2][3] = 31;//pls remove after TODO
-    //iO[5][6] = 31;//pls remove after TODO
+    iO[2][3] = new interactiveObject(31, null, 0, 0);
+    iO[5][6] = new interactiveObject(31, null, 0, 0);
     iO[1][8] = new interactiveObject(1, null, 0, 0);
     iO[1][9] = new interactiveObject(1, null, 0, 0);
     
@@ -222,7 +222,7 @@ function loadiO(){
                     this.cube = new THREE.Mesh(this.geometry, this.material);
                     scene.add(this.cube);
                     iO[x][y] = new interactiveObject(3, this.cube, x , y);
-                    this.cube.position.set( x, 1.5, y );
+                    this.cube.position.set( x, 1, y );
                 }
                 else if(iO[x][y].tipo==4){ //green objective
                     this.geometry = new THREE.BoxGeometry(1,1,1);
@@ -231,7 +231,7 @@ function loadiO(){
                     this.cube = new THREE.Mesh(this.geometry, this.material);
                     scene.add(this.cube);
                     iO[x][y] = new interactiveObject(4, this.cube, x, y);
-                    this.cube.position.set( x, 1.5, y );
+                    this.cube.position.set( x, 1, y );
                 }
                 else if(iO[x][y].tipo==2){ //green objective
                     this.geometry = new THREE.BoxGeometry(1,2.5,1);
@@ -244,6 +244,15 @@ function loadiO(){
                     //player.z = y;
                     player=iO[x][y];
                     this.cube.position.set( x, 1.5, y );
+                }
+                else if(iO[x][y].tipo == 31){ //portal
+                	this.geometry = new THREE.CylinderGeometry(0.25, 0.5, 1.5, 20, 10);
+                	this.material = new THREE.MeshBasicMaterial
+                        ({color:0xffffff, wireframe:false});
+                    this.cube = new THREE.Mesh(this.geometry, this.material);
+                    scene.add(this.cube);
+                    iO[x][y] = new interactiveObject(31, this.cube, x, y);
+                    this.cube.position.set( x, 1.25, y );
                 }
             }
         }
@@ -267,7 +276,7 @@ function interactiveObject(tipo, reference, x, z){
 	    	iO[this.x-xdir][this.z-zdir] = new interactiveObject(0, null, this.x-xdir, this.z-zdir); //remove our reference from the previous place
 	    	return true;
 		}
-		if(iO[this.x+xdir][this.z+zdir].tipo == 3){ //players can go into boxes
+		if((iO[this.x+xdir][this.z+zdir].tipo == 3 || iO[this.x+xdir][this.z+zdir].tipo == 4)  && this.tipo == 2){ //players can go into boxes
 			if(iO[this.x+xdir][this.z+zdir].UpdatePosition(xdir,zdir)){ //we'll try to move that box foward and if we can we'll move ourselves
 		    	this.reference.position.x += xdir;
 		    	this.reference.position.z += zdir;
@@ -275,16 +284,45 @@ function interactiveObject(tipo, reference, x, z){
 		    	this.z +=zdir;
 		    	iO[this.x][this.z] = this; //update the map with our reference
 		    	iO[this.x-xdir][this.z-zdir] = new interactiveObject(0, null, this.x-xdir, this.z-zdir); //remove our reference from the previous place
+		    	return;
 			}
 		}
-		if(iO[this.x+xdir][this.z+zdir].tipo == 4){ //players can go into boxes
-			if(iO[this.x+xdir][this.z+zdir].UpdatePosition(xdir,zdir)){ //we'll try to move that box foward and if we can we'll move ourselves
-		    	this.reference.position.x += xdir;
-		    	this.reference.position.z += zdir;
-		    	this.x +=xdir;
-		    	this.z +=zdir;
+		if(iO[this.x+xdir][this.z+zdir].tipo == 31 && (this.tipo ==2 || this.tipo ==3 || this.tipo==4)){ //players and boxes can walk into portals
+			//we find the other portal
+			let isMovingBoxInto = true;
+			if(this.tipo==2)
+				isMovingBoxInto = false;
+			let otherPortal;
+			for(let x = 0; x<10;x++){
+        		for(let y = 0; y<10;y++){
+        			if(iO[x][y].tipo==31 && (x!= this.x && y!=this.z)){
+        				otherPortal=iO[x][y];
+        			}
+        		}
+        	}
+        	//we save our previous position
+        	let oldx = this.x;
+        	let oldz = this.z;
+        	if(iO[otherPortal.x+xdir][otherPortal.z+zdir].tipo==0){ //if there's air move
+	        	this.reference.position.x = otherPortal.x+xdir;
+		    	this.reference.position.z = otherPortal.z+zdir;
+		    	this.x =otherPortal.x+xdir;
+		    	this.z =otherPortal.z+zdir;
 		    	iO[this.x][this.z] = this; //update the map with our reference
-		    	iO[this.x-xdir][this.z-zdir] = new interactiveObject(0, null, this.x-xdir, this.z-zdir); //remove our reference from the previous place
+		    	iO[oldx][oldz] = new interactiveObject(0, null, oldx, oldz); //remove our reference from the previous place
+				return true;
+		    }
+		    else if((iO[otherPortal.x+xdir][otherPortal.z+zdir].tipo==3 || iO[otherPortal.x+xdir][otherPortal.z+zdir].tipo==4) && this.tipo==2){ //if there's a box try to move it if it's not a box calling this
+		    	if(iO[otherPortal.x+xdir][otherPortal.z+zdir].UpdatePosition(xdir,zdir)){
+		        	let oldx = this.x;
+		        	let oldz = this.z;
+		        	this.reference.position.x = otherPortal.x+xdir;
+			    	this.reference.position.z = otherPortal.z+zdir;
+			    	this.x =otherPortal.x+xdir;
+			    	this.z =otherPortal.z+zdir;
+			    	iO[this.x][this.z] = this; //update the map with our reference
+			    	iO[oldx][oldz] = new interactiveObject(0, null, oldx, oldz); //remove our reference from the previous place
+		    	}
 			}
 		}
 		return false;
@@ -313,6 +351,7 @@ let animate = function () {
             }
         }
     } */
+    //alterGroundOffset(true);
     renderer.render(scene, camera);
 };
 
