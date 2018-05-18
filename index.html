@@ -28,7 +28,7 @@ window.addEventListener( 'resize' , function (){
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
 });
-
+controls = new THREE.OrbitControls( camera, renderer.domElement); //edited this script to disable camera panning
 camera.position.y = 10;
 camera.position.x = 10;
 camera.position.z = 10;
