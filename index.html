@@ -147,6 +147,21 @@ function level1(){ //only changes important values by default floor is filled wi
     
 }
 
+function CycleDirection(xdir,zdir){
+	if(xdir==1&&zdir==0){
+		return {x:0,z:1};
+	}
+	if(xdir==0&&zdir==-1){
+		return {x:1,z:0};
+	}
+	if(xdir==-1&&zdir==0){
+		return {x:0,z:-1};
+	}
+	if(xdir==0&&zdir==1){
+		return {x:-1,z:0};
+	}
+}
+
 function getRandomInt(max) {
   return Math.floor(Math.random() * Math.floor(max));
 }
@@ -289,13 +304,10 @@ function interactiveObject(tipo, reference, x, z){
 		}
 		if(iO[this.x+xdir][this.z+zdir].tipo == 31 && (this.tipo ==2 || this.tipo ==3 || this.tipo==4)){ //players and boxes can walk into portals
 			//we find the other portal
-			let isMovingBoxInto = true;
-			if(this.tipo==2)
-				isMovingBoxInto = false;
 			let otherPortal;
 			for(let x = 0; x<10;x++){
         		for(let y = 0; y<10;y++){
-        			if(iO[x][y].tipo==31 && (x!= this.x && y!=this.z)){
+        			if(iO[x][y].tipo==31 && (x!= this.x+xdir && y!=this.z+zdir)){
         				otherPortal=iO[x][y];
         			}
         		}
@@ -303,29 +315,41 @@ function interactiveObject(tipo, reference, x, z){
         	//we save our previous position
         	let oldx = this.x;
         	let oldz = this.z;
-        	if(iO[otherPortal.x+xdir][otherPortal.z+zdir].tipo==0){ //if there's air move
+			for(let i=0;i<4;i++){
+				if(this.PortalJump(xdir, zdir, otherPortal)){
+					iO[oldx][oldz] = new interactiveObject(0, null, oldx, oldz); //remove our reference from the previous place
+					return true;
+				}
+				console.log("xdir=" +xdir +" zdir=" + zdir);
+				let temp = CycleDirection(xdir,zdir);
+				xdir=temp.x;
+				zdir=temp.z;
+				console.log("xdir=" +xdir +" zdir=" + zdir);
+			}
+
+		}
+	}
+
+	interactiveObject.prototype.PortalJump = function(xdir,zdir, otherPortal){
+    	if(iO[otherPortal.x+xdir][otherPortal.z+zdir].tipo==0){ //if there's air move the player or box going into the portal
+        	this.reference.position.x = otherPortal.x+xdir;
+	    	this.reference.position.z = otherPortal.z+zdir;
+	    	this.x =otherPortal.x+xdir;
+	    	this.z =otherPortal.z+zdir;
+	    	iO[this.x][this.z] = this; //update the map with our reference
+	    	
+			return true;
+	    }
+	    else if((iO[otherPortal.x+xdir][otherPortal.z+zdir].tipo==3 || iO[otherPortal.x+xdir][otherPortal.z+zdir].tipo==4) && this.tipo==2){ //if there's a box blocking the way and if it's the player calling this try to move that box
+    		if(iO[otherPortal.x+xdir][otherPortal.z+zdir].UpdatePosition(xdir,zdir)){
 	        	this.reference.position.x = otherPortal.x+xdir;
 		    	this.reference.position.z = otherPortal.z+zdir;
 		    	this.x =otherPortal.x+xdir;
 		    	this.z =otherPortal.z+zdir;
 		    	iO[this.x][this.z] = this; //update the map with our reference
-		    	iO[oldx][oldz] = new interactiveObject(0, null, oldx, oldz); //remove our reference from the previous place
-				return true;
-		    }
-		    else if((iO[otherPortal.x+xdir][otherPortal.z+zdir].tipo==3 || iO[otherPortal.x+xdir][otherPortal.z+zdir].tipo==4) && this.tipo==2){ //if there's a box try to move it if it's not a box calling this
-		    	if(iO[otherPortal.x+xdir][otherPortal.z+zdir].UpdatePosition(xdir,zdir)){
-		        	let oldx = this.x;
-		        	let oldz = this.z;
-		        	this.reference.position.x = otherPortal.x+xdir;
-			    	this.reference.position.z = otherPortal.z+zdir;
-			    	this.x =otherPortal.x+xdir;
-			    	this.z =otherPortal.z+zdir;
-			    	iO[this.x][this.z] = this; //update the map with our reference
-			    	iO[oldx][oldz] = new interactiveObject(0, null, oldx, oldz); //remove our reference from the previous place
-		    	}
-			}
-		}
-		return false;
+		    	return true;
+	    	}
+	    }
 	}
 }
 
