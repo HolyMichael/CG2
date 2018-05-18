@@ -18,35 +18,49 @@
 let scene = new THREE.Scene();
 let camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 100 );
 let renderer = new THREE.WebGLRenderer();
-controls = new THREE.OrbitControls( camera, renderer.domElement);
-controls.target = new THREE.Vector3(5,0,5);
+controls = new THREE.OrbitControls( camera, renderer.domElement); //edited this script to disable camera panning
+controls.target = new THREE.Vector3(4.5,0,4.5);
+camera.position.set(4.5,10,0);
+controls.update();
 renderer.setSize( window.innerWidth, window.innerHeight );
 document.body.appendChild( renderer.domElement );
 
+document.addEventListener("keydown", Keyboard, false);
+function Keyboard(event){
+	if(event.key == "w"){
+		player.UpdatePosition(0,1);
+	}
+	if(event.key == "a"){
+		player.UpdatePosition(1,0);
+	}
+	if(event.key == "s"){
+		player.UpdatePosition(0,-1);
+	}
+	if(event.key == "d"){
+		player.UpdatePosition(-1,0);
+	}
+}
 window.addEventListener( 'resize' , function (){
     renderer.setSize( window.innerWidth, window.innerHeight );
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
 });
-controls = new THREE.OrbitControls( camera, renderer.domElement); //edited this script to disable camera panning
-camera.position.y = 10;
-camera.position.x = 10;
-camera.position.z = 10;
-
-controls.update();
 
 //variable setup
-let floormap = [];
-let iO = [];
+let floorOffsetSpeed = 0.3; //velocity of floor exiting view
+let floormap = []; //1-> ground 3-> greenobj 4-> redobj
+let iO = []; //2-> player 3-> greenbox 4-> redbox
+let player; //reference to the player within the iO array
 
-for(let i = 0; i<10;i++){
+for(let i = 0; i<10;i++){ //populating array with arrays to make a 2d Martix
     floormap[i] = [];
     iO[i] = [];
 }
 
 for(let x = 0; x<10;x++){
     for(let y = 0; y<10;y++){
-        floormap[x][y] = new interactiveObject(1, null);
+        floormap[x][y] = new interactiveObject(1, null, 0, 0); //fill with floors (the reference is updated later)
+        iO[x][y] = new interactiveObject(0, null, 0, 0); //fill with air
     }
 }
 
@@ -56,91 +70,104 @@ for(let x = 0; x<10;x++){
 
 //function setup
 
-function level1(){
+function level1(){ //only changes important values by default floor is filled with floor and walls\boxes\players\portals are undefined
     currLevel=1;
-    iO[0][0] = new interactiveObject(1, null);
-    iO[0][1] = new interactiveObject(1, null);
-    iO[0][2] = new interactiveObject(1, null);
-    iO[0][3] = new interactiveObject(1, null);
-    iO[0][4] = new interactiveObject(1, null);
-    iO[0][5] = new interactiveObject(1, null);
-    iO[0][6] = new interactiveObject(1, null);
-    iO[0][7] = new interactiveObject(1, null);
-    iO[0][8] = new interactiveObject(1, null);
-    iO[0][9] = new interactiveObject(1, null);
+    iO[0][0] = new interactiveObject(1, null, 0, 0);
+    iO[0][1] = new interactiveObject(1, null, 0, 0);
+    iO[0][2] = new interactiveObject(1, null, 0, 0);
+    iO[0][3] = new interactiveObject(1, null, 0, 0);
+    iO[0][4] = new interactiveObject(1, null, 0, 0);
+    iO[0][5] = new interactiveObject(1, null, 0, 0);
+    iO[0][6] = new interactiveObject(1, null, 0, 0);
+    iO[0][7] = new interactiveObject(1, null, 0, 0);
+    iO[0][8] = new interactiveObject(1, null, 0, 0);
+    iO[0][9] = new interactiveObject(1, null, 0, 0);
     
-    iO[1][0] = new interactiveObject(1, null);
-    iO[1][1] = new interactiveObject(1, null);
-    iO[1][4] = new interactiveObject(1, null);
-    iO[1][5] = new interactiveObject(1, null);
+    iO[1][0] = new interactiveObject(1, null, 0, 0);
+    iO[1][1] = new interactiveObject(1, null, 0, 0);
+    iO[1][4] = new interactiveObject(1, null, 0, 0);
+    iO[1][5] = new interactiveObject(1, null, 0, 0);
     //iO[2][3] = 31;//pls remove after TODO
     //iO[5][6] = 31;//pls remove after TODO
-    iO[1][8] = new interactiveObject(1, null);
-    iO[1][9] = new interactiveObject(1, null);
+    iO[1][8] = new interactiveObject(1, null, 0, 0);
+    iO[1][9] = new interactiveObject(1, null, 0, 0);
     
-    iO[2][0] = new interactiveObject(1, null);
-    iO[2][2] = new interactiveObject(3, null);
-    iO[2][4] = new interactiveObject(1, null);
-    iO[2][5] = new interactiveObject(1, null);
-    floormap[2][7] = new interactiveObject(3, null);
-    iO[2][9] = new interactiveObject(1, null);
+    iO[2][0] = new interactiveObject(1, null, 0, 0);
+    iO[2][2] = new interactiveObject(3, null, 0, 0);
+    iO[2][4] = new interactiveObject(1, null, 0, 0);
+    iO[2][5] = new interactiveObject(1, null, 0, 0);
+    floormap[2][7] = new interactiveObject(3, null, 0, 0);
+    iO[2][9] = new interactiveObject(1, null, 0, 0);
     
-    iO[3][0] = new interactiveObject(1, null);
-    iO[3][4] = new interactiveObject(1, null);
-    iO[3][5] = new interactiveObject(1, null);
-    iO[3][9] = new interactiveObject(1, null);
+    iO[3][0] = new interactiveObject(1, null, 0, 0);
+    iO[3][4] = new interactiveObject(1, null, 0, 0);
+    iO[3][5] = new interactiveObject(1, null, 0, 0);
+    iO[3][9] = new interactiveObject(1, null, 0, 0);
     
-    iO[4][0] = new interactiveObject(1, null);
-    iO[4][1] = new interactiveObject(1, null);
-    iO[4][5] = new interactiveObject(2, null);
-    iO[4][8] = new interactiveObject(1, null);
-    iO[4][9] = new interactiveObject(1, null);
+    iO[4][0] = new interactiveObject(1, null, 0, 0);
+    iO[4][1] = new interactiveObject(1, null, 0, 0);
+    iO[4][5] = new interactiveObject(2, null, 0, 0);
+    iO[4][8] = new interactiveObject(1, null, 0, 0);
+    iO[4][9] = new interactiveObject(1, null, 0, 0);
     
-    iO[5][0] = new interactiveObject(1, null);
-    iO[5][1] = new interactiveObject(1, null);
-    iO[5][8] = new interactiveObject(1, null);
-    iO[5][9] = new interactiveObject(1, null);
+    iO[5][0] = new interactiveObject(1, null, 0, 0);
+    iO[5][1] = new interactiveObject(1, null, 0, 0);
+    iO[5][8] = new interactiveObject(1, null, 0, 0);
+    iO[5][9] = new interactiveObject(1, null, 0, 0);
     
-    iO[6][0] = new interactiveObject(1, null);
-    iO[6][4] = new interactiveObject(1, null);
-    iO[6][5] = new interactiveObject(1, null);
-    iO[6][9] = new interactiveObject(1, null);
+    iO[6][0] = new interactiveObject(1, null, 0, 0);
+    iO[6][4] = new interactiveObject(1, null, 0, 0);
+    iO[6][5] = new interactiveObject(1, null, 0, 0);
+    iO[6][9] = new interactiveObject(1, null, 0, 0);
     
-    iO[7][0] = new interactiveObject(1, null);
-    iO[7][2] = new interactiveObject(4, null);
-    iO[7][4] = new interactiveObject(1, null);
-    iO[7][5] = new interactiveObject(1, null);
-    floormap[7][7] = new interactiveObject(4, null);
-    iO[7][9] = new interactiveObject(1, null);
+    iO[7][0] = new interactiveObject(1, null, 0, 0);
+    iO[7][2] = new interactiveObject(4, null, 0, 0);
+    iO[7][4] = new interactiveObject(1, null, 0, 0);
+    iO[7][5] = new interactiveObject(1, null, 0, 0);
+    floormap[7][7] = new interactiveObject(4, null, 0, 0);
+    iO[7][9] = new interactiveObject(1, null, 0, 0);
     
-    iO[8][0] = new interactiveObject(1, null);
-    iO[8][1] = new interactiveObject(1, null);
-    iO[8][4] = new interactiveObject(1, null);
-    iO[8][5] = new interactiveObject(1, null);
-    iO[8][8] = new interactiveObject(1, null);
-    iO[8][9] = new interactiveObject(1, null);
+    iO[8][0] = new interactiveObject(1, null, 0, 0);
+    iO[8][1] = new interactiveObject(1, null, 0, 0);
+    iO[8][4] = new interactiveObject(1, null, 0, 0);
+    iO[8][5] = new interactiveObject(1, null, 0, 0);
+    iO[8][8] = new interactiveObject(1, null, 0, 0);
+    iO[8][9] = new interactiveObject(1, null, 0, 0);
         
-    iO[9][0] = new interactiveObject(1, null);
-    iO[9][1] = new interactiveObject(1, null);
-    iO[9][2] = new interactiveObject(1, null);
-    iO[9][3] = new interactiveObject(1, null);
-    iO[9][4] = new interactiveObject(1, null);
-    iO[9][5] = new interactiveObject(1, null);
-    iO[9][6] = new interactiveObject(1, null);
-    iO[9][7] = new interactiveObject(1, null);
-    iO[9][8] = new interactiveObject(1, null);
-    iO[9][9] = new interactiveObject(1, null);
+    iO[9][0] = new interactiveObject(1, null, 0, 0);
+    iO[9][1] = new interactiveObject(1, null, 0, 0);
+    iO[9][2] = new interactiveObject(1, null, 0, 0);
+    iO[9][3] = new interactiveObject(1, null, 0, 0);
+    iO[9][4] = new interactiveObject(1, null, 0, 0);
+    iO[9][5] = new interactiveObject(1, null, 0, 0);
+    iO[9][6] = new interactiveObject(1, null, 0, 0);
+    iO[9][7] = new interactiveObject(1, null, 0, 0);
+    iO[9][8] = new interactiveObject(1, null, 0, 0);
+    iO[9][9] = new interactiveObject(1, null, 0, 0);
     
-    for(i=0;i<10;i++)
-        for(j=0;j<10;j++)
-            if(iO[i][j]==2){
-                playerx=i;
-                playerz=j;
-            }
 }
 
 function getRandomInt(max) {
   return Math.floor(Math.random() * Math.floor(max));
+}
+
+function alterGroundOffset(flag){
+	if(flag){
+		for(let x = 0; x<10;x++){
+        	for(let y = 0; y<10;y++){
+        		floormap[x][y].reference.position.x +=floorOffsetSpeed
+        		floormap[x][y].reference.position.z +=floorOffsetSpeed
+        	}
+        }
+	}
+	else{
+		for(let x = 0; x<10;x++){
+        	for(let y = 0; y<10;y++){
+        		floormap[x][y].reference.position.x -=floorOffsetSpeed
+        		floormap[x][y].reference.position.z +=floorOffsetSpeed
+        	}
+        }
+	}
 }
 
 function loadGround(){
@@ -152,7 +179,7 @@ function loadGround(){
                     {color:0xff0000, wireframe:false});
                 this.cube = new THREE.Mesh(this.geometry, this.material);
                 scene.add(cube);
-                floormap[x][y] = new interactiveObject(3, this.cube);
+                floormap[x][y] = new interactiveObject(3, this.cube, x, y);
                 cube.position.set( x, 0, y );
             } else if(floormap[x][y].tipo==4){ //blue objective
                 this.geometry = new THREE.BoxGeometry(1,1,1);
@@ -160,7 +187,7 @@ function loadGround(){
                     {color:0x0000ff, wireframe:false});
                 this.cube = new THREE.Mesh(this.geometry,this.material);
                 scene.add(cube);
-                floormap[x][y] = new interactiveObject(4, this.cube);
+                floormap[x][y] = new interactiveObject(4, this.cube, x, y);
                 cube.position.set( x, 0, y );
             } else { //ground
                 this.geometry = new THREE.BoxGeometry(1,1,1);
@@ -168,8 +195,8 @@ function loadGround(){
                     {color:0x00ffff, wireframe:false});
                 this.cube = new THREE.Mesh(this.geometry, this.material);
                 scene.add(this.cube);
-                floormap[x][y] = new interactiveObject(1, this.cube);
-                this.cube.position.set( x, 0, y );
+                floormap[x][y] = new interactiveObject(1, this.cube, x, y);
+                this.cube.position.set( x, 0, y);
             }
         }
     }
@@ -185,7 +212,7 @@ function loadiO(){
                         ({color:0xffff00, wireframe:false});
                     this.cube = new THREE.Mesh(this.geometry, this.material);
                     scene.add(this.cube);
-                    iO[x][y] = new interactiveObject(1, this.cube);
+                    iO[x][y] = new interactiveObject(1, this.cube, x, y);
                     this.cube.position.set( x, 1.5, y );
                 }
                 else if(iO[x][y].tipo==3){ //green objective
@@ -194,7 +221,7 @@ function loadiO(){
                         ({color:0xff0000, wireframe:false});
                     this.cube = new THREE.Mesh(this.geometry, this.material);
                     scene.add(this.cube);
-                    iO[x][y] = new interactiveObject(3, this.cube);
+                    iO[x][y] = new interactiveObject(3, this.cube, x , y);
                     this.cube.position.set( x, 1.5, y );
                 }
                 else if(iO[x][y].tipo==4){ //green objective
@@ -203,7 +230,19 @@ function loadiO(){
                         ({color:0x0000ff, wireframe:false});
                     this.cube = new THREE.Mesh(this.geometry, this.material);
                     scene.add(this.cube);
-                    iO[x][y] = new interactiveObject(4, this.cube);
+                    iO[x][y] = new interactiveObject(4, this.cube, x, y);
+                    this.cube.position.set( x, 1.5, y );
+                }
+                else if(iO[x][y].tipo==2){ //green objective
+                    this.geometry = new THREE.BoxGeometry(1,2.5,1);
+                    this.material = new THREE.MeshBasicMaterial
+                        ({color:0xffffff, wireframe:false});
+                    this.cube = new THREE.Mesh(this.geometry, this.material);
+                    scene.add(this.cube);
+                    iO[x][y] = new interactiveObject(2, this.cube, x, y);
+                    //player.x = x;
+                    //player.z = y;
+                    player=iO[x][y];
                     this.cube.position.set( x, 1.5, y );
                 }
             }
@@ -212,9 +251,44 @@ function loadiO(){
 }
 
 //object setup
-function interactiveObject(tipo, reference){
+function interactiveObject(tipo, reference, x, z){
     this.tipo = tipo;
     this.reference = reference;
+    this.x = x;
+    this.z = z;
+
+	interactiveObject.prototype.UpdatePosition = function(xdir,zdir){
+		if(iO[this.x+xdir][this.z+zdir].tipo == 0){ //all objects(player and boxes) can go into air
+	    	this.reference.position.x += xdir;
+	    	this.reference.position.z += zdir;
+	    	this.x +=xdir;
+	    	this.z +=zdir;
+	    	iO[this.x][this.z] = this; //update the map with our reference
+	    	iO[this.x-xdir][this.z-zdir] = new interactiveObject(0, null, this.x-xdir, this.z-zdir); //remove our reference from the previous place
+	    	return true;
+		}
+		if(iO[this.x+xdir][this.z+zdir].tipo == 3){ //players can go into boxes
+			if(iO[this.x+xdir][this.z+zdir].UpdatePosition(xdir,zdir)){ //we'll try to move that box foward and if we can we'll move ourselves
+		    	this.reference.position.x += xdir;
+		    	this.reference.position.z += zdir;
+		    	this.x +=xdir;
+		    	this.z +=zdir;
+		    	iO[this.x][this.z] = this; //update the map with our reference
+		    	iO[this.x-xdir][this.z-zdir] = new interactiveObject(0, null, this.x-xdir, this.z-zdir); //remove our reference from the previous place
+			}
+		}
+		if(iO[this.x+xdir][this.z+zdir].tipo == 4){ //players can go into boxes
+			if(iO[this.x+xdir][this.z+zdir].UpdatePosition(xdir,zdir)){ //we'll try to move that box foward and if we can we'll move ourselves
+		    	this.reference.position.x += xdir;
+		    	this.reference.position.z += zdir;
+		    	this.x +=xdir;
+		    	this.z +=zdir;
+		    	iO[this.x][this.z] = this; //update the map with our reference
+		    	iO[this.x-xdir][this.z-zdir] = new interactiveObject(0, null, this.x-xdir, this.z-zdir); //remove our reference from the previous place
+			}
+		}
+		return false;
+	}
 }
 
 //let xd = true;
