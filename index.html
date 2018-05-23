@@ -27,22 +27,26 @@ document.body.appendChild( renderer.domElement );
 
 document.addEventListener("keydown", Keyboard, false);
 function Keyboard(event){
-    if(event.key == "r" || event.key == "R"){
-        levelChange();
-    }
-	if(event.key == "w" || event.key == "W"){
-		player.UpdatePosition(0,1);
+	
+	    if(event.key == "r" || event.key == "R"){
+	        levelChange();
+	    }
+		if(event.key == "w" || event.key == "W"){
+			player.UpdatePosition(0,1);
+		}
+		if(event.key == "a" || event.key == "A"){
+			player.UpdatePosition(1,0);
+		}
+		if(event.key == "s" || event.key == "S"){
+			player.UpdatePosition(0,-1);
+		}
+		if(event.key == "d" || event.key == "D"){
+			player.UpdatePosition(-1,0);
+		}
+	
+	if(!levelComplete){
+		isVictory();
 	}
-	if(event.key == "a" || event.key == "A"){
-		player.UpdatePosition(1,0);
-	}
-	if(event.key == "s" || event.key == "S"){
-		player.UpdatePosition(0,-1);
-	}
-	if(event.key == "d" || event.key == "D"){
-		player.UpdatePosition(-1,0);
-	}
-    isVictory();
 }
 window.addEventListener( 'resize' , function (){
     renderer.setSize( window.innerWidth, window.innerHeight );
@@ -57,6 +61,9 @@ let iO = []; //2-> player 3-> greenbox 4-> redbox
 let player; //reference to the player within the iO array
 let objectives; //objetivos de cada nivel
 let currLevel = 1;
+let levelComplete = false;
+let animationDone = true;
+let frameCount = 0;
 
 for(let i = 0; i<10;i++){ //populating array with arrays to make a 2d Martix
     floormap[i] = [];
@@ -504,25 +511,6 @@ function getRandomInt(max) {
   return Math.floor(Math.random() * Math.floor(max));
 }
 
-function alterGroundOffset(flag){
-	if(flag){
-		for(let x = 0; x<10;x++){
-        	for(let y = 0; y<10;y++){
-        		floormap[x][y].reference.position.x +=floorOffsetSpeed
-        		floormap[x][y].reference.position.z +=floorOffsetSpeed
-        	}
-        }
-	}
-	else{
-		for(let x = 0; x<10;x++){
-        	for(let y = 0; y<10;y++){
-        		floormap[x][y].reference.position.x -=floorOffsetSpeed
-        		floormap[x][y].reference.position.z +=floorOffsetSpeed
-        	}
-        }
-	}
-}
-
 function loadGround(){
     for(let x = 0; x<10;x++){
         for(let y = 0; y<10;y++){
@@ -728,7 +716,7 @@ function interactiveObject(tipo, reference, x, z){
 }
 
 function levelChange(){
-    for(let x = 0; x<10;x++){
+	for(let x = 0; x<10;x++){
         for(let y = 0; y<10;y++){
             scene.remove(floormap[x][y].reference);
             floormap[x][y] = new interactiveObject(1, null, 0, 0);
@@ -736,7 +724,7 @@ function levelChange(){
             iO[x][y] = new interactiveObject(0, null, 0, 0); //fill with air
         }
     }
-    switch(currLevel){
+	switch(currLevel){
         case 1:
             level1();
             break;
@@ -755,6 +743,7 @@ function levelChange(){
     }
     loadGround();
     loadiO();
+    renderer.render(scene,camera);
 }
 
 function isVictory(){
@@ -766,10 +755,10 @@ function isVictory(){
                     kek++;
         }
     }
-    console.log(kek == objectives + " " + kek + " " + objectives);
     if(kek == objectives){
         currLevel++;
-        levelChange();
+        levelComplete = true;
+        frameCount=0;
     }
 }
 
@@ -777,25 +766,44 @@ function isVictory(){
 //game logic
 let animate = function () {
     requestAnimationFrame( animate );
-    /*for(let x = 0; x<10;x++){
-        for(let y = 0; y<10;y++){
-            if(iO[x][y] != undefined){
-                if(iO[x][y].reference != null){
-                    iO[x][y].reference.rotation.x += 0.1;
-                    iO[x][y].reference.rotation.y += 0.1;
-                    iO[x][y].reference.rotation.z += 0.1;
-                }
-            }
-            if(floormap[x][y] != undefined){
-                if(floormap[x][y].reference != null){
-                    floormap[x][y].reference.rotation.x += 0.1;
-                    floormap[x][y].reference.rotation.y += 0.1;
-                    floormap[x][y].reference.rotation.z += 0.1;
-                }
-            }
-        }
-    } */
-    //alterGroundOffset(true);
+    if(levelComplete){
+    	frameCount++;
+    	if (frameCount<100)
+	    	for(let x = 0; x<10;x++){
+	        	for(let y = 0; y<10;y++){
+		            floormap[x][y].reference.position.x += 0.3;
+		            if(iO[x][y].reference != null){
+			            iO[x][y].reference.position.x += 0.3;
+		        	}
+		        }
+		    }
+	    if(frameCount>100&&frameCount<200){
+			camera.position = camera.position.lerp(new THREE.Vector3( 0, -5, 0),0.05);
+	    	for(let x = 0; x<10;x++){
+	        	for(let y = 0; y<10;y++){
+		            floormap[x][y].reference.position.x -= 0.3;
+		            if(iO[x][y].reference != null){
+			            iO[x][y].reference.position.x -= 0.3;
+		        	}
+		        }
+		    }
+	    }
+	}
+    if (frameCount == 200){
+    	levelChange();
+    	animationDone = false;
+    	levelComplete = false;
+    }
+    if(!animationDone){
+	    frameCount++;
+	    if (frameCount < 300){
+	    	camera.position = camera.position.lerp(new THREE.Vector3(4.5,10,0),0.05);
+	    }
+	    if (frameCount==400){
+	    	frameCount = 0;
+	    	animationDone = true;
+	    }
+    }
     renderer.render(scene, camera);
 };
 
